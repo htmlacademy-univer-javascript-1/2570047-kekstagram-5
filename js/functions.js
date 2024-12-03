@@ -1,10 +1,10 @@
-function checkLenght(string, maxLength) {
+function checkLength(string, maxLength) {
     return string.length <= maxLength;
 }
 
-console.log('Ожидаю "true", получаю', checkLength(sivbifb, 20));
-console.log('Ожидаю "true", получаю', checkLength(sivbifbrr, 9));
-console.log('Ожидаю "false", получаю', checkLength(sivbifbegievnepemwwwc, 16));
+console.log('Ожидаю "true", получаю', checkLength('sivbifb', 20));
+console.log('Ожидаю "true", получаю', checkLength('sivbifbrr', 9));
+console.log('Ожидаю "false", получаю', checkLength('sivbifbegievnepemwwwc', 16));
 
 
 function isPalindrome(string) {
@@ -14,9 +14,11 @@ function isPalindrome(string) {
         newString += at(i);
     }
 
-    if (newString === string) {return true}
-    
-    return false
+    if (newString === string) {
+        return true
+    } else {
+        return false
+        }
 }
 
 console.log('Ожидаю "true", получаю', isPalindrome('Аша'));
@@ -26,6 +28,7 @@ console.log('Ожидаю "false", получаю', isPalindrome('Найк'));
 
 function extractNumber(arg) {
     const string = arg.toString();
+    let result;
     for (let i = 0; i < string.length; i++) {
         if (!Number.isNaN(parseInt(string[i], 10))) {
             result += string[i];
