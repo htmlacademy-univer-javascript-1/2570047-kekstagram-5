@@ -1,3 +1,4 @@
-import { createPhotosArray } from './data.js'
-const photosArray = createPhotosArray();
-console.log(JSON.stringify(photosArray, null, 2));
+import { getPhoto } from './data.js';
+import { renderThumbnails } from './rendering.js';
+
+renderThumbnails(getPhoto());
