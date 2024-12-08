@@ -40,7 +40,7 @@ const createMessage = () => Array.from(
 const createComment = () => ({
   id: getRandomInteger(1, 25),
   avatar: `img/avatar-${getRandomInteger(1, AVATAR_COUNT)}.svg`,
-  message: createMessage,
+  message: createMessage(),
   name: getRandomElement(NAMES)
 });
 
