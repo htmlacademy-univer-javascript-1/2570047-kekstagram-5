@@ -1,3 +1,5 @@
+import { sendData } from './api.js';
+
 const MAX_HASHTAGS = 5;
 const MAX_DESCRIPTION_LENGTH = 140;
 const HASHTAG = /^#[A-Za-z0-9а-яё]{1,19}$/i;
@@ -76,6 +78,9 @@ const imgUploadPreview = document.querySelector('.img-upload__preview img');
 const effectLevelValue = document.querySelector('.effect-level__value');
 const effectLevelSlider = document.querySelector('.effect-level__slider');
 const effectLevel = document.querySelector('.img-upload__effect-level');
+const submitButton = form.querySelector('.img-upload__submit');
+const successMessage = document.querySelector('#success').content.querySelector('.success');
+const errorMessage = document.querySelector('#error').content.querySelector('.error');
 
 const pristine = new Pristine(form, {
   classTo: 'img-upload__field-wrapper',
@@ -181,21 +186,68 @@ const formFileIsSelectedHandler = (evt) => {
   }
 };
 
-document.addEventListener('keydown', (evt) => {
+const onDocumentKeydown = (evt) => {
   if (evt.key === 'Escape' && isCursorInInputField()) {
     evt.stopPropagation();
   }
-});
+};
 
-pristine.addValidator(descriptionField, validateDescriptionLength, FormErrors.LONG_DESCRIPTION);
-pristine.addValidator(hashtagsField, validateUniqueHashtags, FormErrors.UNIQUE_HASHTAGS);
-pristine.addValidator(hashtagsField, validateHashtags, FormErrors.INCORRECT_HASHTAG);
-pristine.addValidator(hashtagsField, validateHashtagCount, FormErrors.COUNT_EXCEEDED);
+function hideMessage() {
+  const messageElement = document.querySelector('.success') || document.querySelector('.error');
+  messageElement.remove();
+  document.removeEventListener('keydown', onDocumentKeydown);
+  body.removeEventListener('click', onBodyCLick);
+}
+
+function onBodyCLick(evt) {
+  if (
+    evt.target.closest('.success__inner') || evt.target.closest('.error__inner')
+  ) {
+    return;
+  }
+  hideMessage();
+}
+
+function showMessage(messageElement, closeButtonClass) {
+  body.append(messageElement);
+  document.addEventListener('keydown', onDocumentKeydown);
+  body.addEventListener('click', onBodyCLick);
+  messageElement.querySelector(closeButtonClass).addEventListener('click', hideMessage);
+}
+
+const showSuccessMessage = () => {
+  showMessage(successMessage, '.success__button');
+};
+
+const showErrorMessage = (message) => {
+  const errorElement = errorMessage.cloneNode(true);
+  errorElement.querySelector('.error__title').textContent = message;
+  showMessage(errorElement, '.error__button');
+};
+
+const onFormSubmit = (evt) => {
+  evt.preventDefault();
+  submitButton.disabled = true;
+  const formData = new FormData(evt.target);
+  sendData(formData)
+    .then(() => {
+      closeForm();
+      showSuccessMessage();
+    })
+    .catch((error) => {
+      showErrorMessage(error.message);
+    })
+    .finally(() => {
+      submitButton.disabled = false;
+    });
+};
 
 fileField.addEventListener('change', formFileIsSelectedHandler);
 closeButton.addEventListener('click', closeForm);
 scaleControlSmaller.addEventListener('click', onScaleControlSmallerClick);
 scaleControlBigger.addEventListener('click', onScaleControlBiggerClick);
+document.addEventListener('keydown', onDocumentKeydown);
+
 noUiSlider.create(effectLevelSlider, {
   range: {
     min: DEFAULT_EFFECT.min,
@@ -207,3 +259,9 @@ noUiSlider.create(effectLevelSlider, {
 });
 effectLevelSlider.noUiSlider.on('update', () => updateEffect());
 document.querySelector('.effects__list').addEventListener('change', onEffectChange);
+
+pristine.addValidator(descriptionField, validateDescriptionLength, FormErrors.LONG_DESCRIPTION);
+pristine.addValidator(hashtagsField, validateUniqueHashtags, FormErrors.UNIQUE_HASHTAGS);
+pristine.addValidator(hashtagsField, validateHashtags, FormErrors.INCORRECT_HASHTAG);
+pristine.addValidator(hashtagsField, validateHashtagCount, FormErrors.COUNT_EXCEEDED);
+form.addEventListener('submit', onFormSubmit);
