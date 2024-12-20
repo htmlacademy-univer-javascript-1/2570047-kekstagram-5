@@ -2,12 +2,65 @@ const MAX_HASHTAGS = 5;
 const MAX_DESCRIPTION_LENGTH = 140;
 const HASHTAG = /^#[A-Za-z0-9а-яё]{1,19}$/i;
 
-const FORM_ERRORS = {
+const FormErrors = {
   COUNT_EXCEEDED: `Максимальное количество хэштегов — ${MAX_HASHTAGS}`,
   UNIQUE_HASHTAGS: 'Хэш-теги повторяются',
   INCORRECT_HASHTAG: 'Введен невалидный хэштег',
   LONG_DESCRIPTION: `Описание должно быть не длинее ${MAX_DESCRIPTION_LENGTH} символов`
 };
+
+const SCALE_STEP = 25;
+const MIN_SCALE = 25;
+const MAX_SCALE = 100;
+const DEFAULT_SCALE = 100;
+
+const EffectSetups = {
+  none: {
+    filter: '',
+    min: 0,
+    max: 100,
+    step: 1,
+    unit: ''
+  },
+  chrome: {
+    filter: 'grayscale',
+    min: 0,
+    max: 1,
+    step: 0.1,
+    unit: ''
+  },
+  sepia: {
+    filter: 'sepia',
+    min: 0,
+    max: 1,
+    step: 0.1,
+    unit: ''
+  },
+  marvin: {
+    filter: 'invert',
+    min: 0,
+    max: 100,
+    step: 1,
+    unit: '%'
+  },
+  phobos: {
+    filter: 'blur',
+    min: 0,
+    max: 3,
+    step: 0.1,
+    unit: 'px'
+  },
+  heat: {
+    filter: 'brightness',
+    min: 1,
+    max: 3,
+    step: 0.1,
+    unit: ''
+  }
+};
+
+const DEFAULT_EFFECT = EffectSetups.none;
+let chosenEffect = DEFAULT_EFFECT;
 
 const form = document.querySelector('.img-upload__form');
 const fileField = form.querySelector('.img-upload__input');
@@ -16,13 +69,20 @@ const body = document.querySelector('body');
 const hashtagsField = form.querySelector('.text__hashtags');
 const descriptionField = form.querySelector('.text__description');
 const closeButton = form.querySelector('.img-upload__cancel');
+const scaleControlSmaller = document.querySelector('.scale__control--smaller');
+const scaleControlBigger = document.querySelector('.scale__control--bigger');
+const scaleControlValue = document.querySelector('.scale__control--value');
+const imgUploadPreview = document.querySelector('.img-upload__preview img');
+const effectLevelValue = document.querySelector('.effect-level__value');
+const effectLevelSlider = document.querySelector('.effect-level__slider');
+const effectLevel = document.querySelector('.img-upload__effect-level');
 
 const pristine = new Pristine(form, {
   classTo: 'img-upload__field-wrapper',
   errorTextParent: 'img-upload__field-wrapper',
 });
 
-const validateDescriptionLength = (value) => value.length <= 140;
+const validateDescriptionLength = (value) => value.length <= MAX_DESCRIPTION_LENGTH;
 
 const splitHashtags = (value) => value.trim().split(/\s+/).filter((tag) => Boolean(tag.length));
 
@@ -35,6 +95,59 @@ const validateHashtags = (value) => splitHashtags(value).every((tag) => HASHTAG.
 const validateUniqueHashtags = (value) => {
   const hashtags = splitHashtags(value).map((tag) => tag.toLowerCase());
   return hashtags.length === new Set(hashtags).size;
+};
+
+const updateScale = (value) => {
+  scaleControlValue.value = `${value}%`;
+  imgUploadPreview.style.transform = `scale(${value / 100})`;
+};
+
+const onScaleControlSmallerClick = () => {
+  const currentValue = parseInt(scaleControlValue.value, 10);
+  const newValue = Math.max(currentValue - SCALE_STEP, MIN_SCALE);
+  updateScale(newValue);
+};
+
+const onScaleControlBiggerClick = () => {
+  const currentValue = parseInt(scaleControlValue.value, 10);
+  const newValue = Math.min(currentValue + SCALE_STEP, MAX_SCALE);
+  updateScale(newValue);
+};
+
+const resetScale = () => {
+  updateScale(DEFAULT_SCALE);
+};
+
+const updateEffect = () => {
+  if (chosenEffect === EffectSetups.none) {
+    imgUploadPreview.style.filter = '';
+    effectLevel.classList.add('hidden');
+  } else {
+    effectLevel.classList.remove('hidden');
+    const effectValue = effectLevelSlider.noUiSlider.get();
+    imgUploadPreview.style.filter = `${chosenEffect.filter}(${effectValue}${chosenEffect.unit})`;
+    effectLevelValue.value = effectValue;
+  }
+};
+
+const onEffectChange = (evt) => {
+  if (evt.target.matches('input[type="radio"]')) {
+    chosenEffect = EffectSetups[evt.target.value];
+    effectLevelSlider.noUiSlider.updateOptions({
+      range: {
+        min: chosenEffect.min,
+        max: chosenEffect.max
+      },
+      step: chosenEffect.step,
+      start: chosenEffect.max
+    });
+    updateEffect();
+  }
+};
+
+const resetEffects = () => {
+  chosenEffect = DEFAULT_EFFECT;
+  updateEffect();
 };
 
 const formPressESCHandler = (evt) => {
@@ -52,6 +165,8 @@ const closeForm = () => {
   overlay.classList.add('hidden');
   body.classList.remove('modal-open');
   document.removeEventListener('keydown', formPressESCHandler);
+  resetScale();
+  resetEffects();
 };
 
 const showForm = () => {
@@ -72,10 +187,23 @@ document.addEventListener('keydown', (evt) => {
   }
 });
 
-pristine.addValidator(descriptionField, validateDescriptionLength, FORM_ERRORS.LONG_DESCRIPTION);
-pristine.addValidator(hashtagsField, validateUniqueHashtags, FORM_ERRORS.UNIQUE_HASHTAGS);
-pristine.addValidator(hashtagsField, validateHashtags, FORM_ERRORS.INCORRECT_HASHTAG);
-pristine.addValidator(hashtagsField, validateHashtagCount, FORM_ERRORS.COUNT_EXCEEDED);
+pristine.addValidator(descriptionField, validateDescriptionLength, FormErrors.LONG_DESCRIPTION);
+pristine.addValidator(hashtagsField, validateUniqueHashtags, FormErrors.UNIQUE_HASHTAGS);
+pristine.addValidator(hashtagsField, validateHashtags, FormErrors.INCORRECT_HASHTAG);
+pristine.addValidator(hashtagsField, validateHashtagCount, FormErrors.COUNT_EXCEEDED);
 
 fileField.addEventListener('change', formFileIsSelectedHandler);
 closeButton.addEventListener('click', closeForm);
+scaleControlSmaller.addEventListener('click', onScaleControlSmallerClick);
+scaleControlBigger.addEventListener('click', onScaleControlBiggerClick);
+noUiSlider.create(effectLevelSlider, {
+  range: {
+    min: DEFAULT_EFFECT.min,
+    max: DEFAULT_EFFECT.max
+  },
+  start: DEFAULT_EFFECT.max,
+  step: DEFAULT_EFFECT.step,
+  connect: 'lower'
+});
+effectLevelSlider.noUiSlider.on('update', () => updateEffect());
+document.querySelector('.effects__list').addEventListener('change', onEffectChange);
