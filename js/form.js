@@ -64,6 +64,8 @@ const EffectSetups = {
 const DEFAULT_EFFECT = EffectSetups.none;
 let chosenEffect = DEFAULT_EFFECT;
 
+const FILE_TYPES = ['jpg', 'jpeg', 'png'];
+
 const form = document.querySelector('.img-upload__form');
 const fileField = form.querySelector('.img-upload__input');
 const overlay = form.querySelector('.img-upload__overlay');
@@ -174,6 +176,11 @@ const closeForm = () => {
   resetEffects();
 };
 
+const isValidType = (file) => {
+  const fileName = file.name.toLowerCase();
+  return FILE_TYPES.some((it) => fileName.endsWith(it));
+};
+
 const showForm = () => {
   overlay.classList.remove('hidden');
   body.classList.add('modal-open');
@@ -181,8 +188,20 @@ const showForm = () => {
 };
 
 const formFileIsSelectedHandler = (evt) => {
-  if (evt.target.files.length) {
-    showForm();
+  const file = evt.target.files[0];
+  if (file && isValidType(file)) {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      imgUploadPreview.src = reader.result;
+      const effectPreviews = document.querySelectorAll('.effects__preview');
+      effectPreviews.forEach((preview) => {
+        preview.style.backgroundImage = `url(${reader.result})`;
+      });
+      showForm();
+    };
+
+    reader.readAsDataURL(file);
   }
 };
 
