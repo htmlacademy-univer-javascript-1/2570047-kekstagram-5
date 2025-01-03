@@ -10,7 +10,7 @@ const commentsList = document.querySelector('.social__comments');
 const commentsLoader = document.querySelector('.comments-loader');
 
 let currentComments = [];
-let commentShown = 0;
+let commentsShown = 0;
 
 const COMMENTS_PER_PAGE = 5;
 
@@ -26,25 +26,25 @@ const onDocumentKeydown = (evt) => {
 
 const renderComments = (comments) => {
   const fragment = document.createDocumentFragment();
-  
+
   comments.forEach(({ avatar, message, name }) => {
     const commentElement = document.createElement('li');
     commentElement.classList.add('social__comment');
-    
+
     const imgElement = document.createElement('img');
     imgElement.classList.add('social__picture');
     imgElement.src = avatar;
     imgElement.alt = name;
     imgElement.width = 35;
     imgElement.height = 35;
-    
+
     const textElement = document.createElement('p');
     textElement.classList.add('social__text');
     textElement.textContent = message;
-    
+
     commentElement.appendChild(imgElement);
     commentElement.appendChild(textElement);
-    
+
     fragment.appendChild(commentElement);
   });
 
@@ -103,13 +103,13 @@ function openBigPicture (data) {
   commentsList.innerHTML = '';
   loadMoreComments();
   commentsContainer.classList.remove('hidden');
-  
+
   if (currentComments.length > COMMENTS_PER_PAGE) {
     commentsLoader.classList.remove('hidden');
   } else {
     commentsLoader.classList.add('hidden');
   }
-  
+
   createListeners();
 }
 

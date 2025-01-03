@@ -228,7 +228,9 @@ const showErrorMessage = (message) => {
 const onFormSubmit = (evt) => {
   evt.preventDefault();
   submitButton.disabled = true;
+
   const formData = new FormData(evt.target);
+
   sendData(formData)
     .then(() => {
       closeForm();
@@ -257,6 +259,7 @@ noUiSlider.create(effectLevelSlider, {
   step: DEFAULT_EFFECT.step,
   connect: 'lower'
 });
+
 effectLevelSlider.noUiSlider.on('update', () => updateEffect());
 document.querySelector('.effects__list').addEventListener('change', onEffectChange);
 
@@ -264,4 +267,5 @@ pristine.addValidator(descriptionField, validateDescriptionLength, FormErrors.LO
 pristine.addValidator(hashtagsField, validateUniqueHashtags, FormErrors.UNIQUE_HASHTAGS);
 pristine.addValidator(hashtagsField, validateHashtags, FormErrors.INCORRECT_HASHTAG);
 pristine.addValidator(hashtagsField, validateHashtagCount, FormErrors.COUNT_EXCEEDED);
+
 form.addEventListener('submit', onFormSubmit);
